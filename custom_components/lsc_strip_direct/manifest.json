@@ -1,0 +1,16 @@
+{
+  "domain": "lsc_strip_direct",
+  "name": "LSC Strip (direct, tinytuya)",
+  "codeowners": [
+    "@renelinne"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/renelinne/ha-lsc-strip-direct",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/renelinne/ha-lsc-strip-direct/issues",
+  "requirements": [
+    "tinytuya>=1.14.0"
+  ],
+  "version": "0.1.0"
+}

@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "LSC Strip direkt hinzufügen",
+        "description": "Der Strip darf nicht gleichzeitig in LocalTuya oder der Tuya-App (lokal) verbunden sein.",
+        "data": {
+          "name": "Name",
+          "host": "IP-Adresse",
+          "device_id": "Geräte-ID",
+          "local_key": "Zugangscode (local_key)",
+          "version": "Protokollversion",
+          "scene_dp": "Szenen-Datenpunkt (meist 25)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen: {error}"
+    },
+    "abort": {
+      "already_configured": "Dieser Strip ist bereits eingerichtet"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LSC Strip",
+        "data": {
+          "scene_dp": "Szenen-Datenpunkt (meist 25)"
+        }
+      }
+    }
+  }
+}

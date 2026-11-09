@@ -1,0 +1,9 @@
+DOMAIN = "lsc_strip_direct"
+CONF_HOST = "host"
+CONF_DEVICE_ID = "device_id"
+CONF_LOCAL_KEY = "local_key"
+CONF_VERSION = "version"
+DEFAULT_VERSION = "3.5"
+VERSIONS = ["3.5", "3.4", "3.3"]
+CONF_SCENE_DP = "scene_dp"
+DEFAULT_SCENE_DP = 25

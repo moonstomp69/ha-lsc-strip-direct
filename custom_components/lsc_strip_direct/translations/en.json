@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add LSC strip (direct)",
+        "description": "The strip must not be connected to LocalTuya at the same time.",
+        "data": {
+          "name": "Name",
+          "host": "IP address",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "version": "Protocol version",
+          "scene_dp": "Scene datapoint (usually 25)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Connection failed: {error}"
+    },
+    "abort": {
+      "already_configured": "This strip is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LSC Strip",
+        "data": {
+          "scene_dp": "Scene datapoint (usually 25)"
+        }
+      }
+    }
+  }
+}
