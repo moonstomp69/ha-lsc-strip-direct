@@ -1,4 +1,8 @@
-"""Scene presets (scene_data_v2), taken from the LocalTuya light platform."""
+"""Scene presets (scene_data_v2).
+
+Taken from the LocalTuya light platform (fork xZetsubou/hass-localtuya, based on
+rospogrigio/localtuya, GPL-3.0). Format: https://developer.tuya.com/en/docs/iot/dj?id=K9i5ql3v98hn3#title-11-scene_data_v2
+"""
 
 SCENES = {
     "Night 1": "000e0d0000000000000000c80000",

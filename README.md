@@ -38,7 +38,7 @@ Datapoint 61 holds 7 bytes, base64 encoded: `00 00 00 14 00 BB TT` – `BB` = br
 - Scene list and datapoint (default 25) follow the common Tuya scene format; if scenes do nothing, change the datapoint in the integration options.
 
 ## Credits
-Scene presets taken from [LocalTuya](https://github.com/rospogrigio/localtuya) (GPL-3.0). Protocol library: [tinytuya](https://github.com/jasonacox/tinytuya). Not affiliated with Tuya or LSC.
+Scene presets (`scenes.py`) taken from the LocalTuya light platform – fork [xZetsubou/hass-localtuya](https://github.com/xZetsubou/hass-localtuya), based on [rospogrigio/localtuya](https://github.com/rospogrigio/localtuya) (GPL-3.0). The data format is described in the [Tuya lighting documentation](https://developer.tuya.com/en/docs/iot/dj?id=K9i5ql3v98hn3#title-11-scene_data_v2). Protocol library: [tinytuya](https://github.com/jasonacox/tinytuya). Not affiliated with Tuya or LSC.
 
 ---
 
