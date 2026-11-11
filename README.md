@@ -9,7 +9,7 @@ Made for strips whose white light is controlled via **DP 61** (`paint_colour_dat
 ## Features
 - One light entity per strip (and a device): on/off, brightness, colour (HS), white colour temperature (2700–6500 K)
 - Smooth switch from colour to white (no flicker)
-- Effects: *Mode Color, Mode Scene, Music* the 19 preset scenes (Night, Read, Meeting, Rainbow, Christmas, …) plus **your own scenes** learned from the Tuya app (see below)
+- Effects: *Mode Color, Mode Scene, Music*, the 19 preset scenes (Night, Read, Meeting, Rainbow, Christmas, …) plus **your own scenes** learned from the Tuya app (see below)
 - Changes made in the Tuya app show up instantly (push updates over one persistent local connection)
 - Config flow with connection test
 
