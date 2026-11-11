@@ -93,6 +93,10 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         self._client: StripClient | None = None
 
     @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {"learned_scenes": dict(self._scenes)}
+
+    @property
     def effect_list(self) -> list[str]:
         extra = [n for n in self._scenes if n not in SCENES]
         return [EFFECT_COLOUR, EFFECT_SCENE, *SCENES, *extra, EFFECT_MUSIC]
