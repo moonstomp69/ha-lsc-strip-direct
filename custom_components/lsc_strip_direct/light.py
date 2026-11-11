@@ -35,6 +35,7 @@ from .const import (
     DOMAIN,
     SCENE_DP,
 )
+from .scenes import BUILTIN_SCENES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         d = entry.data
         self._entry = entry
         self._scene_dp = SCENE_DP
-        self._scenes: dict[str, str] = {}  # name -> DP51 raw value
+        self._learned: dict[str, str] = {}  # name -> DP51 raw value (user saved)
         self._store: Store | None = None
         self._attr_name = None  # entity takes the device name
         self._attr_has_entity_name = True
@@ -91,8 +92,13 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         self._client: StripClient | None = None
 
     @property
+    def _scenes(self) -> dict[str, str]:
+        """Built-in scenes plus the ones the user saved (user wins on same name)."""
+        return {**BUILTIN_SCENES, **self._learned}
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"learned_scenes": dict(self._scenes)}
+        return {"learned_scenes": dict(self._learned)}
 
     @property
     def effect_list(self) -> list[str]:
@@ -104,7 +110,7 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
             self.hass, 1, f"{DOMAIN}.scenes.{self._entry.data[CONF_DEVICE_ID]}"
         )
         if isinstance(saved := await self._store.async_load(), dict):
-            self._scenes = dict(saved.get("scenes", {}))
+            self._learned = dict(saved.get("scenes", {}))
         if (last := await self.async_get_last_state()) is not None:
             a = last.attributes
             if a.get(ATTR_BRIGHTNESS):
@@ -250,7 +256,7 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
     # ---- scene learning ---------------------------------------------------
     async def _save_scenes(self) -> None:
         if self._store:
-            await self._store.async_save({"scenes": self._scenes})
+            await self._store.async_save({"scenes": self._learned})
         self.async_write_ha_state()
 
     async def async_save_scene(self, name: str) -> None:
@@ -263,10 +269,12 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
             raise HomeAssistantError(
                 "Der Strip hat noch keine Szene gemeldet. Wähle zuerst in der Tuya-App eine Szene."
             )
-        self._scenes[name] = value
+        self._learned[name] = value
         await self._save_scenes()
 
     async def async_delete_scene(self, name: str) -> None:
-        if self._scenes.pop(name, None) is None:
+        if self._learned.pop(name, None) is None:
+            if name in BUILTIN_SCENES:
+                raise HomeAssistantError(f"Szene '{name}' ist fest eingebaut und kann nicht gelöscht werden")
             raise HomeAssistantError(f"Szene '{name}' nicht gefunden")
         await self._save_scenes()
