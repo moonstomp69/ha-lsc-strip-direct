@@ -9,8 +9,7 @@
           "host": "IP-Adresse",
           "device_id": "Geräte-ID",
           "local_key": "Zugangscode (local_key)",
-          "version": "Protokollversion",
-          "scene_dp": "Szenen-Datenpunkt (meist 25)"
+          "version": "Protokollversion"
         }
       }
     },
@@ -21,12 +20,24 @@
       "already_configured": "Dieser Strip ist bereits eingerichtet"
     }
   },
-  "options": {
-    "step": {
-      "init": {
-        "title": "LSC Strip",
-        "data": {
-          "scene_dp": "Szenen-Datenpunkt (meist 25)"
+  "services": {
+    "save_scene": {
+      "name": "Szene speichern",
+      "description": "Speichert die aktuell in der Tuya-App gewählte Szene unter einem Namen.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Name der Szene im Effekt-Menü."
+        }
+      }
+    },
+    "delete_scene": {
+      "name": "Szene löschen",
+      "description": "Entfernt eine gespeicherte Szene.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Name der Szene."
         }
       }
     }

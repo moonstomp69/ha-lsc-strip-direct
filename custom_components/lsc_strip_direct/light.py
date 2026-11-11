@@ -5,6 +5,8 @@ import logging
 import time
 from typing import Any
 
+import voluptuous as vol
+
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_EFFECT,
@@ -17,6 +19,9 @@ from homeassistant.components.light import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
@@ -26,39 +31,44 @@ from .const import (
     CONF_DEVICE_ID,
     CONF_HOST,
     CONF_LOCAL_KEY,
-    CONF_SCENE_DP,
     CONF_VERSION,
-    DEFAULT_SCENE_DP,
     DOMAIN,
+    SCENE_DP,
 )
-from .scenes import SCENES
 
 _LOGGER = logging.getLogger(__name__)
 
 EFFECT_COLOUR = "Mode Color"
 EFFECT_SCENE = "Mode Scene"
 EFFECT_MUSIC = "Musik"
-SCENE_BY_DATA = {v: k for k, v in SCENES.items()}
 
 GRACE = 4.0  # seconds after our own command in which device reports are ignored
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities) -> None:
     async_add_entities([LscStripDirectLight(entry)])
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "save_scene", {vol.Required("name"): cv.string}, "async_save_scene"
+    )
+    platform.async_register_entity_service(
+        "delete_scene", {vol.Required("name"): cv.string}, "async_delete_scene"
+    )
 
 
 class LscStripDirectLight(RestoreEntity, LightEntity):
     _attr_should_poll = False
     _attr_supported_color_modes = {ColorMode.HS, ColorMode.COLOR_TEMP}
     _attr_supported_features = LightEntityFeature.EFFECT
-    _attr_effect_list = [EFFECT_COLOUR, EFFECT_SCENE, *SCENES, EFFECT_MUSIC]
     _attr_min_color_temp_kelvin = p.MIN_KELVIN
     _attr_max_color_temp_kelvin = p.MAX_KELVIN
 
     def __init__(self, entry: ConfigEntry) -> None:
         d = entry.data
         self._entry = entry
-        self._scene_dp = int(entry.options.get(CONF_SCENE_DP, d.get(CONF_SCENE_DP, DEFAULT_SCENE_DP)))
+        self._scene_dp = SCENE_DP
+        self._scenes: dict[str, str] = {}  # name -> DP51 raw value
+        self._store: Store | None = None
         self._attr_name = None  # entity takes the device name
         self._attr_has_entity_name = True
         self._attr_device_info = DeviceInfo(
@@ -80,8 +90,17 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         self._last_cmd = 0.0
         self._client: StripClient | None = None
 
+    @property
+    def effect_list(self) -> list[str]:
+        return [EFFECT_COLOUR, EFFECT_SCENE, *self._scenes, EFFECT_MUSIC]
+
     # ---- lifecycle --------------------------------------------------------
     async def async_added_to_hass(self) -> None:
+        self._store = Store(
+            self.hass, 1, f"{DOMAIN}.scenes.{self._entry.data[CONF_DEVICE_ID]}"
+        )
+        if isinstance(saved := await self._store.async_load(), dict):
+            self._scenes = dict(saved.get("scenes", {}))
         if (last := await self.async_get_last_state()) is not None:
             a = last.attributes
             if a.get(ATTR_BRIGHTNESS):
@@ -144,7 +163,8 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
                 self._attr_effect = EFFECT_MUSIC
             elif isinstance(mode, str) and mode.startswith("scene"):
                 data = self._dps.get(str(self._scene_dp))
-                self._attr_effect = SCENE_BY_DATA.get(data, EFFECT_SCENE)
+                by_data = {v: k for k, v in self._scenes.items()}
+                self._attr_effect = by_data.get(data, EFFECT_SCENE)
             if self._attr_effect is not None:
                 pass
             elif mode == p.MODE_WHITE or (mode != p.MODE_COLOUR and "61" in changed and white):
@@ -166,10 +186,10 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         effect = kwargs.get(ATTR_EFFECT)
-        if effect in SCENES or effect in (EFFECT_SCENE, EFFECT_MUSIC):
+        if effect in self._scenes or effect in (EFFECT_SCENE, EFFECT_MUSIC):
             writes: list[tuple[int, Any]] = [(20, True)]
-            if effect in SCENES:
-                writes += [(self._scene_dp, SCENES[effect]), (21, "scene")]
+            if effect in self._scenes:
+                writes += [(self._scene_dp, self._scenes[effect]), (21, "scene")]
             elif effect == EFFECT_SCENE:
                 writes += [(21, "scene")]
             else:
@@ -222,3 +242,27 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         except Exception:  # noqa: BLE001
             return False
         return abs(hs[0] - dh) < 2 and abs(hs[1] - ds) < 2
+
+    # ---- scene learning ---------------------------------------------------
+    async def _save_scenes(self) -> None:
+        if self._store:
+            await self._store.async_save({"scenes": self._scenes})
+        self.async_write_ha_state()
+
+    async def async_save_scene(self, name: str) -> None:
+        """Store the scene that is currently active in the Tuya app under a name."""
+        name = name.strip()
+        value = self._dps.get(str(self._scene_dp))
+        if not name or name in (EFFECT_COLOUR, EFFECT_SCENE, EFFECT_MUSIC):
+            raise HomeAssistantError("Ungültiger Name für die Szene")
+        if not isinstance(value, str) or not value:
+            raise HomeAssistantError(
+                "Der Strip hat noch keine Szene gemeldet. Wähle zuerst in der Tuya-App eine Szene."
+            )
+        self._scenes[name] = value
+        await self._save_scenes()
+
+    async def async_delete_scene(self, name: str) -> None:
+        if self._scenes.pop(name, None) is None:
+            raise HomeAssistantError(f"Szene '{name}' nicht gefunden")
+        await self._save_scenes()

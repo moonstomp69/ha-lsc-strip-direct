@@ -9,9 +9,9 @@ Made for strips whose white light is controlled via **DP 61** (`paint_colour_dat
 ## Features
 - One light entity per strip (and a device): on/off, brightness, colour (HS), white colour temperature (2700–6500 K)
 - Smooth switch from colour to white (no flicker)
-- Effects: *Mode Color, Mode Scene, Music* and the 19 preset scenes (Night, Read, Meeting, Rainbow, Christmas, …)
+- Effects: *Mode Color, Mode Scene, Music* plus **your own scenes**: pick a scene in the Tuya app and save it under a name (see below)
 - Changes made in the Tuya app show up instantly (push updates over one persistent local connection)
-- Config flow with connection test; scene datapoint configurable in the options
+- Config flow with connection test
 
 ## Requirements
 - Home Assistant 2025.1 or newer
@@ -30,15 +30,23 @@ Copy `custom_components/lsc_strip_direct` to `/config/custom_components/` and re
 ## Setup
 Settings → Devices & services → *Add integration* → **LSC Strip (direct, tinytuya)**. Enter name, IP, device ID, local key, protocol version (default `3.5`). Repeat for each strip.
 
+## Scenes
+The strip's scenes live in DP 51 (`dreamlight_scene_mode`, raw/base64) and cannot be generated, so the integration *learns* them:
+1. Pick a scene in the Tuya app.
+2. In Home Assistant → Developer tools → Actions call `lsc_strip_direct.save_scene` for the light with a `name`.
+3. The name appears in the light's effect list. Remove it with `lsc_strip_direct.delete_scene`.
+
+Scenes are stored per strip (`.storage/lsc_strip_direct.scenes.<device id>`).
+
 ## How the white mode works
 Datapoint 61 holds 7 bytes, base64 encoded: `00 00 00 14 00 BB TT` – `BB` = brightness 1–100, `TT` = colour temperature 0 (warm) – 100 (cold). Writing it also switches the strip to white mode. Colour uses DP 24 (`HHHHSSSSVVVV`, hue 0–360, saturation/value 0–1000) plus DP 21 = `colour`.
 
 ## Limitations
 - Only tested with the LSC strips mentioned above. Other Tuya lights may work for colour/scenes, but their white mode will not.
-- Scene list and datapoint (default 25) follow the common Tuya scene format; if scenes do nothing, change the datapoint in the integration options.
+- Scenes must be saved once from the Tuya app (see above); they are not shared between strips.
 
 ## Credits
-Scene presets (`scenes.py`) taken from the LocalTuya light platform – fork [xZetsubou/hass-localtuya](https://github.com/xZetsubou/hass-localtuya), based on [rospogrigio/localtuya](https://github.com/rospogrigio/localtuya) (GPL-3.0). The data format is described in the [Tuya lighting documentation](https://developer.tuya.com/en/docs/iot/dj?id=K9i5ql3v98hn3#title-11-scene_data_v2). Protocol library: [tinytuya](https://github.com/jasonacox/tinytuya). Not affiliated with Tuya or LSC.
+Protocol library: [tinytuya](https://github.com/jasonacox/tinytuya). Not affiliated with Tuya or LSC.
 
 ---
 

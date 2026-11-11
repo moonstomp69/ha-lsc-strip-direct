@@ -5,5 +5,4 @@ CONF_LOCAL_KEY = "local_key"
 CONF_VERSION = "version"
 DEFAULT_VERSION = "3.5"
 VERSIONS = ["3.5", "3.4", "3.3"]
-CONF_SCENE_DP = "scene_dp"
-DEFAULT_SCENE_DP = 25
+SCENE_DP = 51  # dreamlight_scene_mode (raw)

@@ -1,0 +1,22 @@
+save_scene:
+  target:
+    entity:
+      integration: lsc_strip_direct
+      domain: light
+  fields:
+    name:
+      required: true
+      example: "Regenbogen"
+      selector:
+        text:
+delete_scene:
+  target:
+    entity:
+      integration: lsc_strip_direct
+      domain: light
+  fields:
+    name:
+      required: true
+      example: "Regenbogen"
+      selector:
+        text:

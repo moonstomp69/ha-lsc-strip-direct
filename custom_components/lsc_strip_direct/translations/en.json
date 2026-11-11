@@ -9,8 +9,7 @@
           "host": "IP address",
           "device_id": "Device ID",
           "local_key": "Local key",
-          "version": "Protocol version",
-          "scene_dp": "Scene datapoint (usually 25)"
+          "version": "Protocol version"
         }
       }
     },
@@ -21,12 +20,24 @@
       "already_configured": "This strip is already configured"
     }
   },
-  "options": {
-    "step": {
-      "init": {
-        "title": "LSC Strip",
-        "data": {
-          "scene_dp": "Scene datapoint (usually 25)"
+  "services": {
+    "save_scene": {
+      "name": "Save scene",
+      "description": "Stores the scene currently selected in the Tuya app under a name.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Name shown in the effect list."
+        }
+      }
+    },
+    "delete_scene": {
+      "name": "Delete scene",
+      "description": "Removes a stored scene.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Scene name."
         }
       }
     }
