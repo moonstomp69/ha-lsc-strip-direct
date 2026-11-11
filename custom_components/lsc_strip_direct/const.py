@@ -5,4 +5,5 @@ CONF_LOCAL_KEY = "local_key"
 CONF_VERSION = "version"
 DEFAULT_VERSION = "3.5"
 VERSIONS = ["3.5", "3.4", "3.3"]
-SCENE_DP = 51  # dreamlight_scene_mode (raw)
+SCENE_DP = 51  # dreamlight_scene_mode (raw), learned scenes
+SCENE_DP_PRESET = 25  # scene_data_v2, LocalTuya preset scenes

@@ -34,7 +34,9 @@ from .const import (
     CONF_VERSION,
     DOMAIN,
     SCENE_DP,
+    SCENE_DP_PRESET,
 )
+from .scenes import SCENES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,7 +94,8 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
 
     @property
     def effect_list(self) -> list[str]:
-        return [EFFECT_COLOUR, EFFECT_SCENE, *self._scenes, EFFECT_MUSIC]
+        extra = [n for n in self._scenes if n not in SCENES]
+        return [EFFECT_COLOUR, EFFECT_SCENE, *SCENES, *extra, EFFECT_MUSIC]
 
     # ---- lifecycle --------------------------------------------------------
     async def async_added_to_hass(self) -> None:
@@ -155,7 +158,7 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         if "20" in changed:
             self._attr_is_on = bool(dps["20"])
         mode = self._dps.get("21")
-        if first or changed & {"21", "61", "24", str(self._scene_dp)}:
+        if first or changed & {"21", "61", "24", str(self._scene_dp), str(SCENE_DP_PRESET)}:
             white = p.decode_white(self._dps["61"]) if isinstance(self._dps.get("61"), str) else None
             colour = p.decode_colour(self._dps["24"]) if isinstance(self._dps.get("24"), str) else None
             self._attr_effect = None
@@ -164,7 +167,10 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
             elif isinstance(mode, str) and mode.startswith("scene"):
                 data = self._dps.get(str(self._scene_dp))
                 by_data = {v: k for k, v in self._scenes.items()}
-                self._attr_effect = by_data.get(data, EFFECT_SCENE)
+                preset = {v: k for k, v in SCENES.items()}.get(
+                    self._dps.get(str(SCENE_DP_PRESET))
+                )
+                self._attr_effect = by_data.get(data) or preset or EFFECT_SCENE
             if self._attr_effect is not None:
                 pass
             elif mode == p.MODE_WHITE or (mode != p.MODE_COLOUR and "61" in changed and white):
@@ -179,23 +185,25 @@ class LscStripDirectLight(RestoreEntity, LightEntity):
         self.async_write_ha_state()
 
     # ---- HA -> device -----------------------------------------------------
-    def _send(self, writes: list[tuple[int, Any]]) -> None:
+    def _send(self, writes: list[tuple[int, Any]], atomic: bool = False) -> None:
         self._last_cmd = time.monotonic()
         if self._client:
-            self._client.send(writes)
+            self._client.send(writes, atomic)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         effect = kwargs.get(ATTR_EFFECT)
-        if effect in self._scenes or effect in (EFFECT_SCENE, EFFECT_MUSIC):
+        if effect in self._scenes or effect in SCENES or effect in (EFFECT_SCENE, EFFECT_MUSIC):
             writes: list[tuple[int, Any]] = [(20, True)]
             if effect in self._scenes:
                 writes += [(self._scene_dp, self._scenes[effect]), (21, "scene")]
+            elif effect in SCENES:
+                writes += [(SCENE_DP_PRESET, SCENES[effect]), (21, "scene")]
             elif effect == EFFECT_SCENE:
                 writes += [(21, "scene")]
             else:
                 writes += [(21, "music")]
             self._attr_effect = effect
-            self._send(writes)
+            self._send(writes, atomic=True)
             self._attr_is_on = True
             self.async_write_ha_state()
             return

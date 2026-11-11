@@ -78,9 +78,9 @@ class StripClient:
         if self._thread:
             self._thread.join(timeout=10)
 
-    def send(self, writes: list[tuple[int, Any]]) -> None:
-        """Queue ordered DP writes."""
-        self._queue.put(list(writes))
+    def send(self, writes: list[tuple[int, Any]], atomic: bool = False) -> None:
+        """Queue DP writes; atomic=True sends them in ONE packet."""
+        self._queue.put((list(writes), atomic))
 
     def _run(self) -> None:
         while not self._stop.is_set():
@@ -98,10 +98,16 @@ class StripClient:
                             job = self._queue.get_nowait()
                             if job is None:
                                 continue
-                            for dp, value in job:
-                                res = dev.set_value(int(dp), value)
+                            writes, atomic = job
+                            if atomic and hasattr(dev, "set_multiple_values"):
+                                res = dev.set_multiple_values({str(dp): v for dp, v in writes})
                                 if isinstance(res, dict) and "Error" in res:
-                                    raise RuntimeError(f"set {dp} failed: {res}")
+                                    raise RuntimeError(f"set {writes} failed: {res}")
+                            else:
+                                for dp, value in writes:
+                                    res = dev.set_value(int(dp), value)
+                                    if isinstance(res, dict) and "Error" in res:
+                                        raise RuntimeError(f"set {dp} failed: {res}")
                     except queue.Empty:
                         pass
                     if self._stop.is_set():

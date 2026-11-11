@@ -9,7 +9,7 @@ Made for strips whose white light is controlled via **DP 61** (`paint_colour_dat
 ## Features
 - One light entity per strip (and a device): on/off, brightness, colour (HS), white colour temperature (2700–6500 K)
 - Smooth switch from colour to white (no flicker)
-- Effects: *Mode Color, Mode Scene, Music* plus **your own scenes**: pick a scene in the Tuya app and save it under a name (see below)
+- Effects: *Mode Color, Mode Scene, Music* the 19 preset scenes (Night, Read, Meeting, Rainbow, Christmas, …) plus **your own scenes** learned from the Tuya app (see below)
 - Changes made in the Tuya app show up instantly (push updates over one persistent local connection)
 - Config flow with connection test
 
@@ -31,7 +31,7 @@ Copy `custom_components/lsc_strip_direct` to `/config/custom_components/` and re
 Settings → Devices & services → *Add integration* → **LSC Strip (direct, tinytuya)**. Enter name, IP, device ID, local key, protocol version (default `3.5`). Repeat for each strip.
 
 ## Scenes
-The strip's scenes live in DP 51 (`dreamlight_scene_mode`, raw/base64) and cannot be generated, so the integration *learns* them:
+The preset scenes are written to DP 25 together with the mode in one packet. App scenes live in DP 51 (`dreamlight_scene_mode`, raw/base64) and cannot be generated, so the integration can *learn* them:
 1. Pick a scene in the Tuya app.
 2. In Home Assistant → Developer tools → Actions call `lsc_strip_direct.save_scene` for the light with a `name`.
 3. The name appears in the light's effect list. Remove it with `lsc_strip_direct.delete_scene`.
@@ -46,7 +46,7 @@ Datapoint 61 holds 7 bytes, base64 encoded: `00 00 00 14 00 BB TT` – `BB` = br
 - Scenes must be saved once from the Tuya app (see above); they are not shared between strips.
 
 ## Credits
-Protocol library: [tinytuya](https://github.com/jasonacox/tinytuya). Not affiliated with Tuya or LSC.
+Preset scene data (`scenes.py`) taken from the LocalTuya light platform – fork [xZetsubou/hass-localtuya](https://github.com/xZetsubou/hass-localtuya), based on [rospogrigio/localtuya](https://github.com/rospogrigio/localtuya) (GPL-3.0). Protocol library: [tinytuya](https://github.com/jasonacox/tinytuya). Not affiliated with Tuya or LSC.
 
 ---
 
